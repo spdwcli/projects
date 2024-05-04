@@ -5,6 +5,9 @@
 #include <functional>
 #include <set>
 #include <map>
+#include <tuple>
+#include <stdlib.h>
+#include <assert.h>
 #include "npc.h"
 
 /* Defines */ 
@@ -25,6 +28,8 @@ int make_random(int left, int right) {
 
 std::vector<std::vector<char>> grid;
 std::vector<NPC*> npcs;
+int error_counter = 0;
+std::set<int> st;
 
 /* ------------------- */
 /* Mutexes for threads */
@@ -40,16 +45,44 @@ std::mutex process_npc_mutex;
 
 // Executed in <grid_print_thread> - prints grid 
 void print_grid() {
-    // I have no idea what this thing does
+    system("clear");
+
+    // I have no idea how this works
     printf("\n1b[2J");
 
     while(true) {
+        // I have no idea how this works too
         printf("\x1b[H");
 
+        // Print grid with frame around
+        for(int it = 0; it < grid[0].size() + 2; it++) 
+            std::cout << "-";
+        std::cout << "\n";
         for(auto line: grid) {
-            // print grid cells
+            std::cout << "|";
             for(auto cell: line)
                 std::cout << cell;
+            std::cout << "|\n";
+        }
+        for(int it = 0; it < grid[0].size() + 2; it++)
+            std::cout << "-";
+        std::cout << "\n\n";
+
+        std::cout << "NPC's coordinates\n";
+        std::cout << "-----------------\n";
+
+        for(auto npc: npcs) {
+            std::tuple<int, int, char> npc_parameters = npc->get_parameters();
+
+            std::cout << std::get<2>(npc_parameters) << ": " 
+                      << std::get<0>(npc_parameters) << " " 
+                      << std::get<1>(npc_parameters) << " ";
+
+            // Needed to make sure that next NPC position 
+            // will not overlaps with current position
+            for(int i = 0; i < 10; i++) {
+                std::cout << " ";
+            }
 
             std::cout << "\n";
         }
@@ -76,11 +109,14 @@ void process_npc(std::pair<int, int> position, char logo) {
         unlock_mutex(process_npc_mutex);
         
         // Random movement speed
-        std::this_thread::sleep_for(std::chrono::milliseconds(make_random(100, 1000)));
+        std::this_thread::sleep_for(std::chrono::milliseconds(make_random(0, 1000)));
     }
 }
 
 int main() {
+    // will it compile on Windows?
+    system("tput civis");
+    
     int rows{}, columns{}; 
     
     // Input rows & columns (grid size)
@@ -185,7 +221,7 @@ int main() {
                 CLEAR(row, column, used, cords, ' ');
 
                 // Fill group of cells with '#'
-                if(cords.size() <= 5)
+                if(cords.size() <= 10)
                     for(auto &[x, y]: cords)
                         grid[x][y] = '#';
             }
@@ -205,7 +241,7 @@ int main() {
                 CLEAR(row, column, used, cords, '#');
 
                 // Fill group of cells with '#'
-                if(cords.size() <= 5)
+                if(cords.size() <= 10)
                     for(auto &[x, y]: cords)
                         grid[x][y] = ' ';
             }
@@ -226,7 +262,13 @@ int main() {
     char first_available_logo = 'A';
 
     // Placing NPC's on grid
-    int number_of_npc = make_random(5, 10);
+    std::cout << "Number of NPC's: ";
+
+    int number_of_npc{}; 
+    std::cin >> number_of_npc;
+
+    assert(number_of_npc >= 0 && number_of_npc <= 26);
+    
     for(int it = 0; it < number_of_npc; it++) {
         // get random free cell
         int index = make_random(0, free_cells.size() - 1);

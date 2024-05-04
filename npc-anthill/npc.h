@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <random>
+#include <tuple>
 
 class NPC {
 public:
@@ -30,6 +31,11 @@ public:
         }
     }
 
+    std::tuple<int, int, char> get_parameters() {
+        std::tuple<int, int, char> parameters = std::make_tuple(pos_x, pos_y, logo);
+        return parameters;
+    }
+
 private:
     // private method, used to generate random number in specific range
     int make_random(int left, int right) {
@@ -41,7 +47,7 @@ private:
 
     // variables
     const std::vector<std::pair<int, int>> directions = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
-    int  pos_x;
-    int  pos_y;
-    char logo;
+    int  pos_x{};
+    int  pos_y{};
+    char logo{};
 };
