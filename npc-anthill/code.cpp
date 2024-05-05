@@ -256,7 +256,7 @@ void print_grid() {
                     block += ' ';
                     block += grid[row + 1][column] == '#' ? grid[row + 1][column] : ' ';
                     block += ' ';
-    
+
                     if(blocks_replace.find(block) == blocks_replace.end()) 
                         std::cout << grid[row][column];
                     else {
