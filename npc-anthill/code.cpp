@@ -125,7 +125,29 @@ std::map<std::string, std::string> blocks_replace = {
      "   ", "\u2550"},
 
     {" # "
-     "   ", "\u25A1"},
+     "   ", "#"},
+
+    // last row
+    {" # "
+     "###", "\u2569"},
+
+    {" # "
+     "## ", "\u255D"},
+
+    {" # "
+     " ##", "\u255A"},
+
+    {"   "
+     "## ", "\u2550"},
+
+    {"   "
+     " ##", "\u2550"},
+
+    {"   "
+     "###", "\u2550"},
+
+    {"   "
+     " # ", "\u2573"},
 
     // upper left corner
     {"##"
@@ -148,8 +170,86 @@ std::map<std::string, std::string> blocks_replace = {
      " #", "\u2551"},
 
     {"##"
-     "  ", "\u2550"}
+     "  ", "\u2550"},
+
+    // lower left corner
+    {"# "
+     "##", "\u255A"},
+
+    {"  "
+     "##", "\u2550"},
+
+    {"  "
+     "# ", "\u25A1"},
+
+    // upper right corner
+    {" #"
+     "##", "\u255D"},
+
+    // first column non-corner
+    {"# "
+     "##"
+     "# ", "\u2560"},
+
+    {"# "
+     "##"
+     "  ", "\u255A"},
+
+    {"  "
+     "##"
+     "# ", "\u2554"},
+
+    {"# "
+     "# "
+     "# ", "\u2551"},
+
+    {"# "
+     "# "
+     "  ", "\u2551"},
+
+    {"  "
+     "# "
+     "# ", "\u2551"},
+
+    {"  "
+     "##"
+     "  ", "\u2550"},
+
+    {"  "
+     "# "
+     "  ", "\u25A1"},
+
+    // second column non-corner
+    {" #"
+     "##"
+     " #", "\u2563"},
+
+    {" #"
+     "##"
+     "  ", "\u255D"},
+
+    {"  "
+     "##"
+     " #", "\u2557"},
+
+    {" #"
+     " #"
+     " #", "\u2551"},
+
+    {" #"
+     " #"
+     "  ", "\u2551"},
+
+    {"  "
+     " #"
+     " #", "\u2551"},
+
+    {"  "
+     " #"
+     "  ", "\u25A1"},
 };
+
+std::vector<std::vector<std::string>> beautified_grid_random_blocks;
 
 /* ------------------- */
 /* Mutexes for threads */
@@ -169,7 +269,7 @@ void print_grid() {
     system("clear");
 
     // I have no idea how this works
-    printf("\n1b[2J");
+    // printf("\n1b[2J");
 
     while(true) {
         // I have no idea how this works too
@@ -192,27 +292,18 @@ void print_grid() {
             for(int row = 0; row < rows; row++) {
                 std::cout << "\u2502";
                 for(int column = 0; column < columns; column++) {
-                    if(grid[row][column] != '#' ||
-                        row == 0 ||
-                        row == rows - 1 ||
-                        column == 0 ||
-                        column == columns - 1) {
+                    if(grid[row][column] != '#') {
+                        std::cout << grid[row][column]; 
+                        continue;
+                    }
+
+                    if(row == 0 ||
+                       row == rows - 1 ||
+                       column == 0 ||
+                       column == columns - 1) {
 
                         if(row == 0) {
                             std::string block;
-                            if(column == columns - 1) {
-                                block += grid[row][column - 1] == '#' ? grid[row][column - 1] : ' ';
-                                block += grid[row][column];
-                                block += ' ';
-                                block += grid[row + 1][column] == '#' ? grid[row + 1][column] : ' ';
-
-                                if(blocks_replace.find(block) == blocks_replace.end())
-                                    std::cout << grid[row][column];
-                                else 
-                                    std::cout << blocks_replace[block];
-
-                                continue;
-                            }
 
                             if(column == 0) {
                                 block += grid[row][column];
@@ -228,6 +319,20 @@ void print_grid() {
                                 continue;
                             }
 
+                            if(column == columns - 1) {
+                                block += grid[row][column - 1] == '#' ? grid[row][column - 1] : ' ';
+                                block += grid[row][column];
+                                block += ' ';
+                                block += grid[row + 1][column] == '#' ? grid[row + 1][column] : ' ';
+
+                                if(blocks_replace.find(block) == blocks_replace.end())
+                                    std::cout << grid[row][column];
+                                else 
+                                    std::cout << blocks_replace[block];
+
+                                continue;
+                            }
+
                             block += grid[row][column - 1] == '#' ? grid[row][column - 1] : ' ';
                             block += grid[row][column];
                             block += grid[row][column + 1] == '#' ? grid[row][column + 1] : ' ';
@@ -239,9 +344,80 @@ void print_grid() {
                                 std::cout << grid[row][column];
                             else
                                 std::cout << blocks_replace[block];
+                        } else if(row == rows - 1) {
+                            std::string block;
 
-                        } else 
-                            std::cout << grid[row][column];
+                            if(column == 0) {
+                                block += grid[row - 1][column] == '#' ? grid[row - 1][column] : ' ';
+                                block += ' ';
+                                block += grid[row][column];
+                                block += grid[row][column + 1] == '#' ? grid[row][column + 1] : ' ';
+
+                                if(blocks_replace.find(block) == blocks_replace.end())
+                                    std::cout << grid[row][column];
+                                else 
+                                    std::cout << blocks_replace[block];
+
+                                continue;
+                            }
+
+                            if(column == columns - 1) {
+                                block += ' ';
+                                block += grid[row - 1][column] == '#' ? grid[row - 1][column] : ' ';
+                                block += grid[row][column - 1] == '#' ? grid[row][column - 1] : ' ';
+                                block += grid[row][column];
+
+                                if(blocks_replace.find(block) == blocks_replace.end())
+                                    std::cout << grid[row][column];
+                                else 
+                                    std::cout << blocks_replace[block];
+
+                                continue;
+                            }
+
+                            block += ' ';
+                            block += grid[row - 1][column] == '#' ? grid[row - 1][column] : ' ';
+                            block += ' ';
+                            block += grid[row][column - 1] == '#' ? grid[row][column - 1] : ' ';
+                            block += grid[row][column]; 
+                            block += grid[row][column + 1] == '#' ? grid[row][column + 1] : ' ';
+
+                            if(blocks_replace.find(block) == blocks_replace.end()) 
+                                std::cout << grid[row][column];
+                            else
+                                std::cout << blocks_replace[block];
+                        } else {
+                            std::string block;
+
+                            if(column == 0) {
+                                block += grid[row - 1][column] == '#' ? grid[row - 1][column] : ' ';
+                                block += ' ';
+                                block += grid[row][column];
+                                block += grid[row][column + 1] == '#' ? grid[row][column + 1] : ' ';
+                                block += grid[row + 1][column] == '#' ? grid[row + 1][column] : ' ';
+                                block += ' ';
+
+                                if(blocks_replace.find(block) == blocks_replace.end())
+                                    std::cout << grid[row][column];
+                                else
+                                    std::cout << blocks_replace[block];
+                                continue;
+                            }
+
+                            if(column == columns - 1) {
+                                block += ' ';
+                                block += grid[row - 1][column] == '#' ? grid[row - 1][column] : ' ';
+                                block += grid[row][column - 1] == '#' ? grid[row][column - 1] : ' ';
+                                block += grid[row][column];
+                                block += ' ';
+                                block += grid[row + 1][column] == '#' ? grid[row + 1][column] : ' ';
+
+                                if(blocks_replace.find(block) == blocks_replace.end())
+                                    std::cout << grid[row][column];
+                                else
+                                    std::cout << blocks_replace[block];
+                            }
+                        }
                         continue;
                     }
 
@@ -256,6 +432,33 @@ void print_grid() {
                     block += ' ';
                     block += grid[row + 1][column] == '#' ? grid[row + 1][column] : ' ';
                     block += ' ';
+
+                    std::vector<std::string> random_blocks = {"\u2550", "\u2551", "\u2554", 
+                                                              "\u2557", "\u255A", "\u255D", 
+                                                              "\u2560", "\u2563", "\u2566", 
+                                                              "\u2569", "\u256C"};
+
+                    if(block == " # ### # ") {
+                        std::string real_block;
+
+                        real_block += grid[row - 1][column - 1];
+                        real_block += grid[row - 1][column];
+                        real_block += grid[row - 1][column + 1];
+                        real_block += grid[row][column - 1];
+                        real_block += grid[row][column];
+                        real_block += grid[row][column + 1];
+                        real_block += grid[row + 1][column - 1];
+                        real_block += grid[row + 1][column];
+                        real_block += grid[row + 1][column + 1];
+
+                        if(real_block == "#########") {
+                            if(beautified_grid_random_blocks[row][column] == "empty")
+                                beautified_grid_random_blocks[row][column] = 
+                                    random_blocks[make_random(0, random_blocks.size() - 1)];
+                            std::cout << beautified_grid_random_blocks[row][column];
+                            continue;
+                        }
+                    }
 
                     if(blocks_replace.find(block) == blocks_replace.end()) 
                         std::cout << grid[row][column];
@@ -375,9 +578,13 @@ int main() {
 
     std::cout << "Columns: ";
     std::cin >> columns;
+
+    //assert(rows >= 3 && columns >= 3);
     
     // Initialize grids
     grid = std::vector<std::vector<char>> (rows, std::vector<char> (columns, ' '));
+    beautified_grid_random_blocks = std::vector<std::vector<std::string>> 
+                                    (rows, std::vector<std::string> (columns, "empty"));
     
     // DFS algorithm
     std::function<void(int, int, int, int)> DFS;
@@ -497,7 +704,7 @@ int main() {
             }
         }
     }
-    
+
     // Collecting list of all free cells
     std::vector<std::pair<int, int>> free_cells;
     for(int row = 0; row < rows; row++) {
@@ -520,6 +727,9 @@ int main() {
     assert(number_of_npc >= 0 && number_of_npc <= 26);
     
     for(int it = 0; it < number_of_npc; it++) {
+        if(free_cells.size() == 0)
+            continue;
+
         // get random free cell
         int index = make_random(0, free_cells.size() - 1);
         std::pair<int, int> position = free_cells[index];
