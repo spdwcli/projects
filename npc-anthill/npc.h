@@ -8,12 +8,17 @@ public:
     NPC(int pos_x, 
         int pos_y, 
         char logo, 
-        std::vector<std::vector<char>> &grid) : pos_x(pos_x), pos_y(pos_y), logo(logo) {
+        std::vector<std::vector<char>> &grid) : pos_x(pos_x), 
+                                                pos_y(pos_y), 
+                                                logo(logo), 
+                                                action_blocked(false) {
         grid[pos_x][pos_y] = logo;
     }
     ~NPC() {}
 
     void make_action(int action, std::vector<std::vector<char>> &grid) {
+        if(action_blocked) 
+            return;
         if(!action) {
             // idle 
         } else {
@@ -31,9 +36,17 @@ public:
         }
     }
 
+    void scan_zone() {
+
+    }
+
     std::tuple<int, int, char> get_parameters() {
         std::tuple<int, int, char> parameters = std::make_tuple(pos_x, pos_y, logo);
         return parameters;
+    }
+
+    char get_logo() {
+        return logo;
     }
 
 private:
@@ -50,4 +63,5 @@ private:
     int  pos_x{};
     int  pos_y{};
     char logo{};
+    bool action_blocked;
 };

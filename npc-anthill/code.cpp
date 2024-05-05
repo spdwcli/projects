@@ -8,6 +8,7 @@
 #include <tuple>
 #include <stdlib.h>
 #include <assert.h>
+#include <string>
 #include "npc.h"
 
 /* Defines */ 
@@ -27,6 +28,7 @@ int make_random(int left, int right) {
 /* ---------------- */
 
 std::vector<std::vector<char>> grid;
+std::vector<std::vector<char>> previous_grid;
 std::vector<NPC*> npcs;
 int error_counter = 0;
 std::set<int> st;
@@ -38,6 +40,7 @@ std::set<int> st;
 std::mutex print_grid_mutex; // probably don't need this, because we're 
                              // not changing any data in <grid_print_thread>
 std::mutex process_npc_mutex;
+std::mutex npc_zone_scanning_mutex;
 
 /* ----------------- */
 /* Threads functions */
@@ -56,21 +59,39 @@ void print_grid() {
 
         // Print grid with frame around
         for(int it = 0; it < grid[0].size() + 2; it++) 
-            std::cout << "-";
+            if(!it)
+                std::cout << "\u250C";
+            else if(it < grid[0].size() + 1)
+                std::cout << "\u2500";
+            else 
+                std::cout << "\u2510";
         std::cout << "\n";
         for(auto line: grid) {
-            std::cout << "|";
+            std::cout << "\u2502";
             for(auto cell: line)
-                std::cout << cell;
-            std::cout << "|\n";
+                if(cell == '#')
+                    std::cout << "\u2588";
+                else 
+                    std::cout << cell;       
+            std::cout << "\u2502\n";
         }
         for(int it = 0; it < grid[0].size() + 2; it++)
-            std::cout << "-";
+            if(!it)
+                std::cout << "\u2514";
+            else if(it < grid[0].size() + 1)
+                std::cout << "\u2500";
+            else 
+                std::cout << "\u2518";
         std::cout << "\n\n";
 
-        std::cout << "NPC's coordinates\n";
-        std::cout << "-----------------\n";
+        // Print NPC list header
+        std::string header_title = "NPC's coordinates";
+        std::cout << header_title << "\n";
+        for(int it = 0; it < header_title.size(); it++)
+            std::cout << "\u2500";
+        std::cout << "\n";
 
+        // Print NPC list
         for(auto npc: npcs) {
             std::tuple<int, int, char> npc_parameters = npc->get_parameters();
 
@@ -79,12 +100,27 @@ void print_grid() {
                       << std::get<1>(npc_parameters) << " ";
 
             // Needed to make sure that next NPC position 
-            // will not overlaps with current position
+            // will not overlaps with current position in output
             for(int i = 0; i < 10; i++) {
                 std::cout << " ";
             }
 
             std::cout << "\n";
+        }
+    }
+}
+
+void npc_zone_scanning(char logo) {
+    for(auto npc: npcs) {
+        if(npc->get_logo() != logo) 
+            continue;
+
+        while(true) {
+            lock_mutex(npc_zone_scanning_mutex);
+        
+            npc->scan_zone();
+
+            unlock_mutex(npc_zone_scanning_mutex);
         }
     }
 }
@@ -98,6 +134,12 @@ void process_npc(std::pair<int, int> position, char logo) {
     // Add NPC for NPC list (just in case we need it somewhere)
     npcs.push_back(&npc);
     unlock_mutex(process_npc_mutex);
+
+    // Create thread for scanning zone around NPC
+    std::thread npc_zone_scanning_thread(npc_zone_scanning, logo);
+
+    // Detach zone scanning thread from this NPC thread
+    npc_zone_scanning_thread.detach();
 
     // NPC processor
     while(true) {
@@ -277,7 +319,7 @@ int main() {
         // select available logo for NPC
         char logo = first_available_logo++;
 
-        // Create thread for NPC processing;
+        // Create thread for NPC processing
         std::thread npc_processing_thread(process_npc, position, logo);
 
         // Detach thread from main thread
