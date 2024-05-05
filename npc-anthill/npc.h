@@ -11,7 +11,8 @@ public:
         std::vector<std::vector<char>> &grid) : pos_x(pos_x), 
                                                 pos_y(pos_y), 
                                                 logo(logo), 
-                                                action_blocked(false) {
+                                                action_blocked(false),
+                                                pair_npc('-') {
         grid[pos_x][pos_y] = logo;
     }
     ~NPC() {}
@@ -36,12 +37,27 @@ public:
         }
     }
 
-    void scan_zone() {
+    void scan_zone(int distance, 
+                   std::vector<std::vector<char>> &grid) {
+        int rows = grid.size(), columns = grid[0].size();
 
+        for(int row = pos_x - distance * 2; row < pos_x + distance * 2; row++) {
+            for(int column = pos_y - distance * 2; column < pos_y + distance * 2; column++) {
+                if(!(row >= 0 && row < rows && column >= 0 && column < columns)) continue;
+                long double diff = sqrt(pow(row - pos_x, 2) + pow(column - pos_y, 2));
+                if((int)diff <= distance && 
+                   (grid[row][column] >= 'A' &&
+                    grid[row][column] <= 'Z' && 
+                    row != pos_x && column != pos_y)) {
+                    pair_npc = action_blocked ? pair_npc : grid[row][column];
+                    action_blocked = true;
+                }
+            }
+        }
     }
 
-    std::tuple<int, int, char> get_parameters() {
-        std::tuple<int, int, char> parameters = std::make_tuple(pos_x, pos_y, logo);
+    std::tuple<int, int, char, bool, char> get_parameters() {
+        std::tuple<int, int, char, bool, char> parameters = std::make_tuple(pos_x, pos_y, logo, action_blocked, pair_npc);
         return parameters;
     }
 
@@ -64,4 +80,5 @@ private:
     int  pos_y{};
     char logo{};
     bool action_blocked;
+    char pair_npc;
 };

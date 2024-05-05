@@ -28,7 +28,6 @@ int make_random(int left, int right) {
 /* ---------------- */
 
 std::vector<std::vector<char>> grid;
-std::vector<std::vector<char>> previous_grid;
 std::vector<NPC*> npcs;
 int error_counter = 0;
 std::set<int> st;
@@ -85,7 +84,7 @@ void print_grid() {
         std::cout << "\n\n";
 
         // Print NPC list header
-        std::string header_title = "NPC's coordinates";
+        std::string header_title = "NPC statistics";
         std::cout << header_title << "\n";
         for(int it = 0; it < header_title.size(); it++)
             std::cout << "\u2500";
@@ -93,11 +92,21 @@ void print_grid() {
 
         // Print NPC list
         for(auto npc: npcs) {
-            std::tuple<int, int, char> npc_parameters = npc->get_parameters();
+            std::tuple<int, int, char, bool, char> npc_parameters = npc->get_parameters();
 
-            std::cout << std::get<2>(npc_parameters) << ": " 
-                      << std::get<0>(npc_parameters) << " " 
-                      << std::get<1>(npc_parameters) << " ";
+            int pos_x = std::get<0>(npc_parameters);
+            int pos_y = std::get<1>(npc_parameters);
+            char logo = std::get<2>(npc_parameters);
+            bool state = std::get<3>(npc_parameters);
+            char pair_npc = std::get<4>(npc_parameters);
+
+            std::cout << logo << ": ";
+            std::cout << "Coordinates [" << pos_x << "; " << pos_y << "], ";
+            std::cout << "State: " << (state ? "blocked" : "active");
+            if(state) {
+                std::cout << ", ";
+                std::cout << "Pair: " << pair_npc;
+            }
 
             // Needed to make sure that next NPC position 
             // will not overlaps with current position in output
@@ -110,17 +119,20 @@ void print_grid() {
     }
 }
 
+// Executed in <npc_zone_scanning_thread> - scans zone around NPC
 void npc_zone_scanning(char logo) {
     for(auto npc: npcs) {
         if(npc->get_logo() != logo) 
             continue;
 
+        int distance = 5;
+
         while(true) {
             lock_mutex(npc_zone_scanning_mutex);
-        
-            npc->scan_zone();
-
+            npc->scan_zone(distance, grid);
             unlock_mutex(npc_zone_scanning_mutex);
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(0));
         }
     }
 }
@@ -151,12 +163,12 @@ void process_npc(std::pair<int, int> position, char logo) {
         unlock_mutex(process_npc_mutex);
         
         // Random movement speed
-        std::this_thread::sleep_for(std::chrono::milliseconds(make_random(0, 1000)));
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
     }
 }
 
 int main() {
-    // will it compile on Windows?
+    // will it execute on Windows?
     system("tput civis");
     
     int rows{}, columns{}; 
@@ -168,7 +180,7 @@ int main() {
     std::cout << "Columns: ";
     std::cin >> columns;
     
-    // Initialize grid
+    // Initialize grids
     grid = std::vector<std::vector<char>> (rows, std::vector<char> (columns, ' '));
     
     // DFS algorithm
