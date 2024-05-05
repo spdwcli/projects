@@ -32,6 +32,125 @@ std::vector<NPC*> npcs;
 int error_counter = 0;
 std::set<int> st;
 
+std::map<std::string, std::string> blocks_replace = {
+    // non-frame cells
+    // ---------------
+    {" # "
+     "###"
+     " # ", "\u256C"},
+
+    {"   "
+     " # "
+     " # ", "\u2551"},
+
+    {" # "
+     " # "
+     "   ", "\u2551"},
+
+    {"   "
+     "## "
+     "   ", "\u2550"},
+
+    {"   "
+     " ##"
+     "   ", "\u2550"},
+
+    {"   "
+     "###"
+     " # ", "\u2566"},
+
+    {" # "
+     " ##"
+     " # ", "\u2560"},
+
+    {" # "
+     "## "
+     " # ", "\u2563"},
+
+    {" # "
+     "###"
+     "   ", "\u2569"},
+
+    {" # "
+     "## "
+     "   ", "\u255D"},
+
+    {" # "
+     " ##"
+     "   ", "\u255A"},
+
+    {"   "
+     "## "
+     " # ", "\u2557"},
+
+    {"   "
+     " ##"
+     " # ", "\u2554"},
+
+    {" # "
+     " # "
+     " # ", "\u2551"},
+
+    {"   "
+     "###"
+     "   ", "\u2550"},
+
+    {"   "
+     " # "
+     "   ", "\u25A1"},
+
+    // on-frame cells
+    // --------------
+    
+    // first row
+    {"###"
+     " # ", "\u2566"},
+
+    {"## "
+     " # ", "\u2557"},
+
+    {" ##"
+     " # ", "\u2554"},
+
+    {"###"
+     "   ", "\u2550"},
+
+    {" # "
+     " # ", "\u2551"},
+
+    {" ##"
+     "   ", "\u2550"},
+
+    {"## "
+     "   ", "\u2550"},
+
+    {" # "
+     "   ", "\u25A1"},
+
+    // upper left corner
+    {"##"
+     "# ", "\u2554"},
+
+    {"# "
+     "  ", "\u25A1"},
+
+    {"# "
+     "# ", "\u2551"},
+
+    // upper right corner
+    {"##"
+     " #", "\u2557"},
+
+    {" #"
+     "  ", "\u25A1"},
+
+    {" #"
+     " #", "\u2551"},
+
+    {"##"
+     "  ", "\u2550"}
+};
+
 /* ------------------- */
 /* Mutexes for threads */
 /* ------------------- */
@@ -65,15 +184,92 @@ void print_grid() {
             else 
                 std::cout << "\u2510";
         std::cout << "\n";
-        for(auto line: grid) {
-            std::cout << "\u2502";
-            for(auto cell: line)
-                if(cell == '#')
-                    std::cout << "\u2588";
-                else 
-                    std::cout << cell;       
-            std::cout << "\u2502\n";
-        }
+
+        // Converts '#' to something more pretty depending on surrounding elements
+        auto beautify_grid_elements = [](std::vector<std::vector<char>> grid) -> void {
+            int rows = grid.size(), columns = grid[0].size();
+
+            for(int row = 0; row < rows; row++) {
+                std::cout << "\u2502";
+                for(int column = 0; column < columns; column++) {
+                    if(grid[row][column] != '#' ||
+                        row == 0 ||
+                        row == rows - 1 ||
+                        column == 0 ||
+                        column == columns - 1) {
+
+                        if(row == 0) {
+                            std::string block;
+                            if(column == columns - 1) {
+                                block += grid[row][column - 1] == '#' ? grid[row][column - 1] : ' ';
+                                block += grid[row][column];
+                                block += ' ';
+                                block += grid[row + 1][column] == '#' ? grid[row + 1][column] : ' ';
+
+                                if(blocks_replace.find(block) == blocks_replace.end())
+                                    std::cout << grid[row][column];
+                                else 
+                                    std::cout << blocks_replace[block];
+
+                                continue;
+                            }
+
+                            if(column == 0) {
+                                block += grid[row][column];
+                                block += grid[row][column + 1] == '#' ? grid[row][column + 1] : ' ';
+                                block += grid[row + 1][column] == '#' ? grid[row + 1][column] : ' ';
+                                block += ' ';
+
+                                if(blocks_replace.find(block) == blocks_replace.end())
+                                    std::cout << grid[row][column];
+                                else 
+                                   std::cout << blocks_replace[block];
+
+                                continue;
+                            }
+
+                            block += grid[row][column - 1] == '#' ? grid[row][column - 1] : ' ';
+                            block += grid[row][column];
+                            block += grid[row][column + 1] == '#' ? grid[row][column + 1] : ' ';
+                            block += ' ';
+                            block += grid[row + 1][column] == '#' ? grid[row + 1][column] : ' ';
+                            block += ' ';
+
+                            if(blocks_replace.find(block) == blocks_replace.end())
+                                std::cout << grid[row][column];
+                            else
+                                std::cout << blocks_replace[block];
+
+                        } else 
+                            std::cout << grid[row][column];
+                        continue;
+                    }
+
+                    std::string block;
+
+                    block += ' ';
+                    block += grid[row - 1][column] == '#' ? grid[row - 1][column] : ' ';
+                    block += ' ';
+                    block += grid[row][column - 1] == '#' ? grid[row][column - 1] : ' ';
+                    block += grid[row][column];
+                    block += grid[row][column + 1] == '#' ? grid[row][column + 1] : ' ';
+                    block += ' ';
+                    block += grid[row + 1][column] == '#' ? grid[row + 1][column] : ' ';
+                    block += ' ';
+    
+                    if(blocks_replace.find(block) == blocks_replace.end()) 
+                        std::cout << grid[row][column];
+                    else {
+                        std::cout << blocks_replace[block];
+                    }
+                }
+                std::cout << "\u2502\n";
+            }
+        };
+
+        // Beautify grid elements
+        beautify_grid_elements(grid);
+
         for(int it = 0; it < grid[0].size() + 2; it++)
             if(!it)
                 std::cout << "\u2514";
@@ -94,12 +290,14 @@ void print_grid() {
         for(auto npc: npcs) {
             std::tuple<int, int, char, bool, char> npc_parameters = npc->get_parameters();
 
+            // NPC parameters
             int pos_x = std::get<0>(npc_parameters);
             int pos_y = std::get<1>(npc_parameters);
             char logo = std::get<2>(npc_parameters);
             bool state = std::get<3>(npc_parameters);
             char pair_npc = std::get<4>(npc_parameters);
 
+            // Print NPC parameters
             std::cout << logo << ": ";
             std::cout << "Coordinates [" << pos_x << "; " << pos_y << "], ";
             std::cout << "State: " << (state ? "blocked" : "active");
