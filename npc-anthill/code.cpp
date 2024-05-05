@@ -131,8 +131,6 @@ void npc_zone_scanning(char logo) {
             lock_mutex(npc_zone_scanning_mutex);
             npc->scan_zone(distance, grid);
             unlock_mutex(npc_zone_scanning_mutex);
-
-            std::this_thread::sleep_for(std::chrono::milliseconds(0));
         }
     }
 }
@@ -163,7 +161,7 @@ void process_npc(std::pair<int, int> position, char logo) {
         unlock_mutex(process_npc_mutex);
         
         // Random movement speed
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        std::this_thread::sleep_for(std::chrono::milliseconds(make_random(0, 300)));
     }
 }
 
